@@ -69,10 +69,10 @@ describe('Network wait test', () => {
 });
 
 describe('Network request examples', () => {
-  it('Makes a direct API call and waits on intercept', () => {
-    cy.intercept('GET', '**/comments/*').as('getComment');
-    cy.request('https://jsonplaceholder.cypress.io/comments/1');
-    cy.wait('@getComment').its('response.statusCode').should('eq', 200);
+  it('Makes a direct API call', () => {
+    cy.request('https://jsonplaceholder.cypress.io/comments/1')
+      .its('status')
+      .should('eq', 200);
   });
 
   it('Chains API requests', () => {
@@ -111,12 +111,17 @@ describe('Local storage handling', () => {
 
   it('Reads and clears localStorage', () => {
     cy.get('.ls-btn').click();
-    cy.getAllLocalStorage().should((storage) => {
-      expect(storage['https://example.cypress.io']).to.have.property('prop1', 'red');
+    cy.getAllLocalStorage().should(() => {
+      expect(localStorage.getItem('prop1')).to.eq('red');
+      expect(localStorage.getItem('prop2')).to.eq('blue');
+      expect(localStorage.getItem('prop3')).to.eq('magenta');
     });
+
     cy.clearLocalStorage();
-    cy.getAllLocalStorage().should((storage) => {
-      expect(storage['https://example.cypress.io']).to.deep.equal({});
+    cy.getAllLocalStorage().should(() => {
+      expect(localStorage.getItem('prop1')).to.be.null;
+      expect(localStorage.getItem('prop2')).to.be.null;
+      expect(localStorage.getItem('prop3')).to.be.null;
     });
   });
 });
