@@ -111,17 +111,17 @@ describe('Local storage handling', () => {
 
   it('Reads and clears localStorage', () => {
     cy.get('.ls-btn').click();
-    cy.getAllLocalStorage().should(() => {
-      expect(localStorage.getItem('prop1')).to.eq('red');
-      expect(localStorage.getItem('prop2')).to.eq('blue');
-      expect(localStorage.getItem('prop3')).to.eq('magenta');
+    cy.window().should((win) => {
+      expect(win.localStorage.getItem('prop1')).to.eq('red');
+      expect(win.localStorage.getItem('prop2')).to.eq('blue');
+      expect(win.localStorage.getItem('prop3')).to.eq('magenta');
     });
 
     cy.clearLocalStorage();
-    cy.getAllLocalStorage().should(() => {
-      expect(localStorage.getItem('prop1')).to.be.null;
-      expect(localStorage.getItem('prop2')).to.be.null;
-      expect(localStorage.getItem('prop3')).to.be.null;
+    cy.window().should((win) => {
+      expect(win.localStorage.getItem('prop1')).to.be.null;
+      expect(win.localStorage.getItem('prop2')).to.be.null;
+      expect(win.localStorage.getItem('prop3')).to.be.null;
     });
   });
 });
