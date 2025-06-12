@@ -34,7 +34,7 @@ context('Cache using localStorage', () => {
     cy.visit('cypress/fixtures/simple_page.html')
   })
 
-  it('stores API result in localStorage and reuses it', () => {
+  it('stores API result in localStorage and reuses it across reloads', () => {
     let callCount = 0
     const fresh = { value: 'fresh' }
 
@@ -43,19 +43,32 @@ context('Cache using localStorage', () => {
       req.reply({ statusCode: 200, body: fresh })
     }).as('cache')
 
-    cy.window().then((win) => {
-      return fetch('/cache-data')
-        .then((r) => r.json())
-        .then((data) => {
-          win.localStorage.setItem('cache', JSON.stringify(data))
-        })
+    const fetchAndCache = () => {
+      return cy.window().then((win) => {
+        const existing = win.localStorage.getItem('cache')
+        if (existing) {
+          return JSON.parse(existing)
+        }
+
+        return fetch('/cache-data')
+          .then((r) => r.json())
+          .then((data) => {
+            win.localStorage.setItem('cache', JSON.stringify(data))
+            return data
+          })
+      })
+    }
+
+    fetchAndCache().then((data) => {
+      expect(data).to.deep.equal(fresh)
     })
 
     cy.wrap(null).then(() => expect(callCount).to.eq(1))
 
-    cy.window().then((win) => {
-      const cached = JSON.parse(win.localStorage.getItem('cache'))
-      expect(cached).to.deep.equal(fresh)
+    cy.reload()
+
+    fetchAndCache().then((data) => {
+      expect(data).to.deep.equal(fresh)
     })
 
     cy.wrap(null).then(() => expect(callCount).to.eq(1))
@@ -79,14 +92,24 @@ context('Advanced API interactions', () => {
       }
     }).as('createUser')
 
-    cy.request({
-      method: 'POST',
-      url: '/api/users',
-      body: { name: 'Alice' },
-      retryOnStatusCodeFailure: true,
-      retryOnNetworkFailure: true,
-      retries: 2,
-    }).its('body').should('deep.equal', { id: 1, name: 'Alice' })
+    cy.window().then((win) => {
+      const attempt = (n = 0) => {
+        return fetch('/api/users', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: 'Alice' }),
+        }).then((res) => {
+          if (!res.ok && n < 2) {
+            throw new Error('retry')
+          }
+          return res.json()
+        }).catch(() => attempt(n + 1))
+      }
+
+      return attempt()
+    }).then((body) => {
+      expect(body).to.deep.equal({ id: 1, name: 'Alice' })
+    })
 
     cy.wrap(null).then(() => expect(attempts).to.eq(3))
   })
