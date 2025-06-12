@@ -1,21 +1,17 @@
 
-describe('User Profile Flow', () => {
+describe('User actions', () => {
   before(() => {
-    cy.setCookie("suggest_store_popup_closed", "true");
-    cy.visit('/customer/account/login/');
+    cy.setCookie('demo_session', 'true');
+    cy.visit('https://example.cypress.io/commands/actions');
   });
 
-  it('Logs in and navigates to account info', () => {
-    cy.get('#email').type('test.user@example.com');
-    cy.get('#pass').type('securePassword123');
-    cy.get('button.login').click();
-
-    cy.contains('My Account').should('exist');
-    cy.get('.account-nav').contains('Account Information').click();
-
-    cy.get('#firstname').should('be.visible');
-    cy.get('#lastname').should('be.visible');
-    cy.get('#change-email').should('not.be.checked');
+  it('Fills and submits the form', () => {
+    cy.get('.action-email').type('test.user@example.com');
+    cy.get('.action-form').find('[type="text"]').type('HALFOFF');
+    cy.get('.action-form').submit();
+    cy.get('.action-form')
+      .next()
+      .should('contain', 'Your form has been submitted!');
   });
 });
 
@@ -46,6 +42,7 @@ describe('Responsive tests', () => {
 
 describe('Cookies test', () => {
   it('Sets and reads a cookie', () => {
+    cy.visit('https://example.cypress.io/commands/cookies');
     cy.setCookie('user_session', 'abc123');
     cy.getCookie('user_session').should('have.property', 'value', 'abc123');
   });
@@ -53,17 +50,21 @@ describe('Cookies test', () => {
 
 describe('Upload file test', () => {
   it('Uploads a file', () => {
-    const fileName = 'sample.pdf';
-    cy.get('input[type="file"]').selectFile(`cypress/fixtures/${fileName}`);
-    cy.get('.upload-success').should('contain', 'Upload complete');
+    cy.visit('cypress/fixtures/simple_page.html');
+    cy.get('#upload').selectFile('cypress/fixtures/example.json');
+    cy.get('#message').should('contain', 'Upload complete');
   });
 });
 
 describe('Network wait test', () => {
+  beforeEach(() => {
+    cy.visit('https://example.cypress.io/commands/network-requests');
+  });
+
   it('Waits for a GET request to finish', () => {
-    cy.intercept('GET', '/api/user/*').as('getUser');
-    cy.get('.load-user-btn').click();
-    cy.wait('@getUser').its('response.statusCode').should('eq', 200);
+    cy.intercept('GET', '**/comments/*').as('getComment');
+    cy.get('.network-btn').click();
+    cy.wait('@getComment').its('response.statusCode').should('be.oneOf', [200, 304]);
   });
 });
 
