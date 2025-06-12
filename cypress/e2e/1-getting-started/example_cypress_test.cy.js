@@ -62,7 +62,7 @@ describe('Network wait test', () => {
   });
 
   it('Waits for a GET request to finish', () => {
-    cy.intercept('GET', '**/comments/*').as('getComment');
+    cy.intercept('GET', 'https://jsonplaceholder.cypress.io/comments/*').as('getComment');
     cy.get('.network-btn').click();
     cy.wait('@getComment').its('response.statusCode').should('be.oneOf', [200, 304]);
   });
@@ -98,7 +98,7 @@ describe('Alias usage', () => {
     cy.get('@firstBtn').click();
     cy.get('@firstBtn').should('have.class', 'btn-success');
 
-    cy.intercept('GET', '**/comments/*').as('getComment');
+    cy.intercept('GET', 'https://jsonplaceholder.cypress.io/comments/*').as('getComment');
     cy.get('.network-btn').click();
     cy.wait('@getComment');
   });
