@@ -5,5 +5,14 @@
 </head>
 <body>
   <h1>Simple Local Page</h1>
+  <input type="file" id="upload" />
+  <div id="message"></div>
+  <script>
+    const input = document.getElementById('upload');
+    const msg = document.getElementById('message');
+    input.addEventListener('change', () => {
+      msg.textContent = 'Upload complete';
+    });
+  </script>
 </body>
 </html>
