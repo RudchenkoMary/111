@@ -66,3 +66,64 @@ describe('Network wait test', () => {
     cy.wait('@getUser').its('response.statusCode').should('eq', 200);
   });
 });
+
+describe('Network request examples', () => {
+  it('Makes a direct API call and waits on intercept', () => {
+    cy.intercept('GET', '**/comments/*').as('getComment');
+    cy.request('https://jsonplaceholder.cypress.io/comments/1');
+    cy.wait('@getComment').its('response.statusCode').should('eq', 200);
+  });
+
+  it('Chains API requests', () => {
+    cy.request('https://jsonplaceholder.cypress.io/users?_limit=1')
+      .its('body.0')
+      .then((user) => {
+        cy.request('POST', 'https://jsonplaceholder.cypress.io/posts', {
+          userId: user.id,
+          title: 'Cypress Test',
+          body: 'Testing with cy.request',
+        }).its('status').should('eq', 201);
+      });
+  });
+});
+
+describe('Alias usage', () => {
+  before(() => {
+    cy.visit('https://example.cypress.io/commands/aliasing');
+  });
+
+  it('Aliases elements and network calls', () => {
+    cy.get('.as-table').find('tbody>tr').first().find('td').first().find('button').as('firstBtn');
+    cy.get('@firstBtn').click();
+    cy.get('@firstBtn').should('have.class', 'btn-success');
+
+    cy.intercept('GET', '**/comments/*').as('getComment');
+    cy.get('.network-btn').click();
+    cy.wait('@getComment');
+  });
+});
+
+describe('Local storage handling', () => {
+  before(() => {
+    cy.visit('https://example.cypress.io/commands/storage');
+  });
+
+  it('Reads and clears localStorage', () => {
+    cy.get('.ls-btn').click();
+    cy.getAllLocalStorage().should((storage) => {
+      expect(storage['https://example.cypress.io']).to.have.property('prop1', 'red');
+    });
+    cy.clearLocalStorage();
+    cy.getAllLocalStorage().should((storage) => {
+      expect(storage['https://example.cypress.io']).to.deep.equal({});
+    });
+  });
+});
+
+describe('File operations', () => {
+  it('Writes and reads a fixture file', () => {
+    const user = { id: 1, name: 'John Doe' };
+    cy.writeFile('cypress/fixtures/tempUser.json', user);
+    cy.readFile('cypress/fixtures/tempUser.json').should('deep.equal', user);
+  });
+});
